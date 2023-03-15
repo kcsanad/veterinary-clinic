@@ -1,0 +1,15 @@
+FROM alpine as certs
+RUN apk update && apk add ca-certificates
+
+FROM busybox:latest
+COPY --from=certs /etc/ssl/certs /etc/ssl/certs
+
+WORKDIR /bin
+
+RUN wget -O curl https://github.com/moparisthebest/static-curl/releases/download/v7.80.0/curl-amd64 \
+    && chmod +x ./curl \
+    && export PATH=$PATH:/bin/curl
+
+WORKDIR /home
+
+CMD ["/bin/sh"]

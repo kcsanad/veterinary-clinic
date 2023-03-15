@@ -1,0 +1,115 @@
+nameOverride: ""
+fullnameOverride: "clinic"
+
+# Custom Service account management
+serviceAccount:
+  # Whether to create service account or not
+  create: true
+
+  # Name of the service account, default: certology.fullname
+  name: clinic-sa
+
+  # extraAnnotations would let users add additional annotations
+  extraAnnotations:
+
+server:
+  enabled: true
+  sidecarContainers:
+  image:
+    repository: kcsanad/veterianry-clinic
+    tag: 1.0.0
+    pullPolicy: IfNotPresent
+
+  # Global default settings (can be overridden per service)
+  replicaCount: 1
+
+  config:
+    inputFile: file:/input/saturday-pet-arrival.yml
+ 
+  metrics:
+    # Annotate pods directly with Prometheus annotations.
+    # Use this if you installed Prometheus from a Helm chart.
+    annotations:
+      enabled: true
+    # Enable Prometheus ServiceMonitor
+    # Use this if you installed the Prometheus Operator (https://github.com/coreos/prometheus-operator).
+    serviceMonitor:
+      enabled: false
+      interval: 30s
+      # Set additional lables to all the ServiceMonitor resources
+      additionalLabels: {}
+      #  label1: value1
+      #  label2: value2
+      # Set Prometheus metric_relabel_configs via ServiceMonitor
+      # Use metricRelabelings to adjust metric and label names as needed
+      metricRelabelings: []
+      # - action: replace
+      #   sourceLabels:
+      #   - exported_namespace
+      #   targetLabel: temporal_namespace
+      # - action: replace
+      #   regex: service_errors_(.+)
+      #   replacement: ${1}
+      #   sourceLabels:
+      #   - __name__
+      #   targetLabel: temporal_error_kind
+      # - action: replace
+      #   regex: service_errors_.+
+      #   replacement: temporal_service_errors
+      #   sourceLabels:
+      #   - __name__
+      #   targetLabel: __name__
+    prometheus:
+      timerType: histogram
+
+  podAnnotations: {}
+
+  podLabels: {}
+
+  resources:
+  #  {}
+   limits:
+    cpu: 250m
+    memory: 128Mi
+   requests:
+    cpu: 250m
+    memory: 128Mi
+  
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  additionalVolumes: []
+
+  additionalVolumeMounts: []
+
+  service:
+    type: ClusterIP
+    port: 8080
+    containerPort: 8080
+    annotations: {}
+
+jobs:
+- name: get-clinic-stats
+  image:
+    repository: kcsanad/busybox-curl
+    tag: latest
+    imagePullPolicy: IfNotPresent
+  schedule: "*/5 * * * *"
+  command: ["curl"]
+  args:
+    - "-s"
+    - "http://clinic-svc.veterinary-clinic.svc:8080/clinic/cronjob"
+  resources:
+    limits:
+      cpu: 50m
+      memory: 64Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  restartPolicy: OnFailure

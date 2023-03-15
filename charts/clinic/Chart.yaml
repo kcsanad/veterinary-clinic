@@ -1,0 +1,6 @@
+apiVersion: v2
+name: veterianry-clinic
+description: This program simulates a busy veterinary clinic where your loved pet becomes healthy once again.
+type: application
+version: 0.0.1
+appVersion: "0.0.1"
